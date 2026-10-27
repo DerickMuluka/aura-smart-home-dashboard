@@ -1,0 +1,66 @@
+CREATE DATABASE IF NOT EXISTS smart_home;
+USE smart_home;
+
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(150) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE rooms (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  name VARCHAR(80) NOT NULL,
+  icon VARCHAR(40) DEFAULT 'room',
+  color VARCHAR(20) DEFAULT '#6366f1',
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE devices (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  room_id INT,
+  name VARCHAR(100) NOT NULL,
+  type ENUM('light','thermostat','lock','camera','speaker','plug','fan','sensor') NOT NULL,
+  status TINYINT(1) DEFAULT 0,
+  value VARCHAR(60) DEFAULT NULL,
+  power_draw DECIMAL(6,2) DEFAULT 0,
+  last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL
+);
+
+CREATE TABLE automations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  trigger_type VARCHAR(40) NOT NULL,
+  trigger_value VARCHAR(80) DEFAULT NULL,
+  action_device_id INT,
+  action_value VARCHAR(80) DEFAULT NULL,
+  enabled TINYINT(1) DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (action_device_id) REFERENCES devices(id) ON DELETE SET NULL
+);
+
+CREATE TABLE energy_log (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  device_id INT,
+  kwh DECIMAL(8,3) NOT NULL,
+  logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE SET NULL
+);
+
+CREATE TABLE events (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  message VARCHAR(255) NOT NULL,
+  severity ENUM('info','warning','critical') DEFAULT 'info',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
